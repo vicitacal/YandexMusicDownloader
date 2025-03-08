@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFrameworks>net7.0;net8.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>12</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="CommandLineParser" Version="2.9.1" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="CopyConfigs.csproj" />
+		<ProjectReference Include="../Yandex.Music.Api-master/src/Yandex.Music.Api/Yandex.Music.Api.csproj" />
+		<ProjectReference Include="../Yandex.Music.Api-master/src/Yandex.Music.Client/Yandex.Music.Client.csproj" />
+	</ItemGroup>
+
+</Project>

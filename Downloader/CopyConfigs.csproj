@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net7.0;net8.0</TargetFrameworks>
+		<Description>This project is only needed to successfully build the dependency projects that require files in specific places.</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove=".\**\*" />
+		<None Remove=".\**\*" />
+		<SourceFiles Include="..\Yandex.Music.Api-master\src\Configs\*" />
+	</ItemGroup>
+
+	<Target Name="CopyConfigs" BeforeTargets="BeforeBuild">
+		<Copy SourceFiles="@(SourceFiles)" DestinationFolder="..\Configs" />
+	</Target>
+
+</Project>
