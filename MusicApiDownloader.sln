@@ -5,12 +5,12 @@ VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicApiDownloader", "Downloader\MusicApiDownloader.csproj", "{98D4D682-10C7-4FA1-BD14-44A5F531E7B6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yandex.Music.Api", "Yandex.Music.Api-master\src\Yandex.Music.Api\Yandex.Music.Api.csproj", "{63F06E9C-DB59-4F38-8F53-13CE12E1B6CE}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yandex.Music.Client", "Yandex.Music.Api-master\src\Yandex.Music.Client\Yandex.Music.Client.csproj", "{5E69D8A5-CFA2-4578-8845-08763C52875E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yandex.Music.Api", "Yandex.Music.Api\src\Yandex.Music.Api\Yandex.Music.Api.csproj", "{63F06E9C-DB59-4F38-8F53-13CE12E1B6CE}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6599C5CA-D97A-43CD-B24E-1E21665E0B91} = {6599C5CA-D97A-43CD-B24E-1E21665E0B91}
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yandex.Music.Client", "Yandex.Music.Api\src\Yandex.Music.Client\Yandex.Music.Client.csproj", "{5E69D8A5-CFA2-4578-8845-08763C52875E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CopyConfigs", "Downloader\CopyConfigs.csproj", "{6599C5CA-D97A-43CD-B24E-1E21665E0B91}"
 EndProject

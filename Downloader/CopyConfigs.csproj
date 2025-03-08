@@ -8,7 +8,7 @@
 	<ItemGroup>
 		<Compile Remove=".\**\*" />
 		<None Remove=".\**\*" />
-		<SourceFiles Include="..\Yandex.Music.Api-master\src\Configs\*" />
+		<SourceFiles Include="..\Yandex.Music.Api\src\Configs\*" />
 	</ItemGroup>
 
 	<Target Name="CopyConfigs" BeforeTargets="BeforeBuild">

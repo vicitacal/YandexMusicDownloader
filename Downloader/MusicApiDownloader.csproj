@@ -16,8 +16,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="CopyConfigs.csproj" />
-		<ProjectReference Include="../Yandex.Music.Api-master/src/Yandex.Music.Api/Yandex.Music.Api.csproj" />
-		<ProjectReference Include="../Yandex.Music.Api-master/src/Yandex.Music.Client/Yandex.Music.Client.csproj" />
+		<ProjectReference Include="../Yandex.Music.Api/src/Yandex.Music.Api/Yandex.Music.Api.csproj" />
+		<ProjectReference Include="../Yandex.Music.Api/src/Yandex.Music.Client/Yandex.Music.Client.csproj" />
 	</ItemGroup>
 
 </Project>
