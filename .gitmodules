@@ -1,0 +1,3 @@
+[submodule "Yandex.Music.Api"]
+	path = Yandex.Music.Api
+	url = https://github.com/K1llMan/Yandex.Music.Api.git
