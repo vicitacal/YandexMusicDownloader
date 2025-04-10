@@ -14,10 +14,11 @@ public partial class Program {
             ShowConsole();
         }
         var downloader = new MusicDownloader();
-        var result = Parser.Default.ParseArguments<DownloadArguments, VerifyArguments>(args);
+        var result = Parser.Default.ParseArguments<DownloadArguments, VerifyArguments, StatusArguments>(args);
         try {
             await result.WithParsedAsync<DownloadArguments>(downloader.Download);
             await result.WithParsedAsync<VerifyArguments>(downloader.Verify);
+            result.WithParsed<StatusArguments>(downloader.ShowStatus);
         } catch (Exception ex) {
             if (silent) {
                 ShowMessage($"Action ends with exception {ex}");

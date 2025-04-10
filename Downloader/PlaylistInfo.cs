@@ -1,20 +1,16 @@
 ﻿using Newtonsoft.Json;
 using Yandex.Music.Api.Models.Playlist;
-using Yandex.Music.Api.Models.Track;
-#nullable disable
 
 namespace MusicApiDownloader;
+#nullable disable
 
-internal class PlaylistInfo
-{
+internal class PlaylistInfo {
 
-    public PlaylistInfo()
-    {
+    public PlaylistInfo() {
         Tracks = [];
     }
 
-    public PlaylistInfo(YPlaylist playlist)
-    {
+    public PlaylistInfo(YPlaylist playlist) {
         Title = playlist.Title;
         Id = playlist.Kind;
         Tracks = playlist.Tracks

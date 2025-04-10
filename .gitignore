@@ -4,3 +4,7 @@ Downloader/bin/**
 Yandex.Music.Api/**
 Yandex.Music.Api
 Configs/**
+/Downloader/Properties/launchSettings.json
+/YandexMusicDownloader.sln.DotSettings.user
+/.idea/.idea.YandexMusicDownloader/.idea
+/Downloader/YandexMusicDownloader.csproj.user

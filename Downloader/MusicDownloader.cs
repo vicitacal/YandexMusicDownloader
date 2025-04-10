@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Yandex.Music.Api.Models.Playlist;
 using Yandex.Music.Downloader;
 using MusicApiDownloader.Properties;
+using System.Text;
 
 namespace MusicApiDownloader;
 
@@ -15,7 +16,7 @@ internal class MusicDownloader {
 
     }
 
-    private async Task AuthorizeAsync(string? accessToken) {
+    private async Task AuthorizeAsync(string accessToken) {
         var client = new YandexMusicClientAsync();
         var authSuccess = await RetryAsync(() => client.Authorize(accessToken));
         if (!authSuccess) {
@@ -25,7 +26,7 @@ internal class MusicDownloader {
     }
 
     public async Task Download(DownloadArguments args) {
-        await AuthorizeAsync(args.AccessToken);
+        await AuthorizeAsync(GetAndSetAccessToken(args));
         args.UserName ??= _client.Account.Login;
         _targetPlaylist = await _client.GetPlaylist(args.UserName, args.PlayListId.ToString())
             ?? throw new Exception($"Cannot find playlist {args.UserName}:{args.PlayListId}");
@@ -43,6 +44,23 @@ internal class MusicDownloader {
         } else {
             Console.WriteLine(resultMessage);
         }
+    }
+
+    public void ShowStatus(StatusArguments args) {
+        var savePath = GetAndSetSavePath(args);
+        var info = PlaylistInfo.Deserialize(args.InfoFilePath);
+        var builder = new StringBuilder();
+        builder.AppendLine($"[Playlist {info.Title} Id: {info.Id} Owner: {info.UserName} ]\n");
+        foreach(var state in info.Tracks.GroupBy(t => t.Status)) {
+            var count = state.Count();
+            if (count == 0) { continue; }
+            builder.AppendLine($"Status: {state.Key}, {count} track{(count > 1 ? "s" : "")}");
+            foreach (var track in state) {
+                builder.AppendLine($"\t {track}");
+            }
+            builder.AppendLine();
+        }
+        Console.WriteLine(builder.ToString());
     }
 
     private async Task<PlaylistInfo> GetPlaylistInfoAsync(ArgumentsBase args) {
@@ -103,17 +121,18 @@ internal class MusicDownloader {
     }
 
     public async Task Verify(VerifyArguments args) {
-        await AuthorizeAsync(args.AccessToken);
+        await AuthorizeAsync(GetAndSetAccessToken(args));
         var info = await GetPlaylistInfoAsync(args);
         _targetPlaylist ??= await _client.GetPlaylist(info.UserName, info.Id.ToString());
         var report = new VerifyReport();
+        var savePath = GetAndSetSavePath(args);
 
         Console.WriteLine($"---Playlist \'{info.Title}\' is found.---\n\nChecking removed tracks");
         var removedTracks = info.Tracks.Where(t => !_targetPlaylist.Tracks.Any(p => p.Id == t.Id)).ToList();
         foreach (var track in removedTracks) {
             info.Tracks.Remove(track);
             try {
-                File.Delete(Path.Combine(args.SavePath, track.FileName));
+                File.Delete(Path.Combine(savePath, track.FileName));
             } catch (Exception ex) {
                 Console.WriteLine($"Failed to delete {track.FileName}. {ex.Message}");
             }
@@ -123,7 +142,7 @@ internal class MusicDownloader {
         Console.WriteLine($"Found {report.RemovedTracks.Count} removed tracks.\nChecking lost tracks");
         foreach (var item in info.Tracks.Where(t => t.Status != TrackStatus.Valid && t.Status != TrackStatus.Unknown)) {
             var oldStatus = item.Status;
-            await SynchronizeTrack(args.SavePath, item);
+            await SynchronizeTrack(savePath, item);
             if (item.Status == TrackStatus.Valid) {
                 report.RecoveredTracks.Add(new() { TargetTrack = item, OldStatus = oldStatus });
             }
@@ -131,7 +150,7 @@ internal class MusicDownloader {
 
         Console.WriteLine($"Found {report.LostTracks.Count} lost tracks.\nChecking recovered tracks");
         foreach (var item in info.Tracks.Where(t => t.Status == TrackStatus.Valid)) {
-            await SynchronizeTrack(args.SavePath, item);
+            await SynchronizeTrack(savePath, item);
             if (item.Status != TrackStatus.Valid) {
                 report.LostTracks.Add(item);
             }
@@ -140,14 +159,34 @@ internal class MusicDownloader {
 
         Console.WriteLine($"Found {report.RecoveredTracks.Count} recovered tracks.\nChecking new tracks");
         foreach (var item in info.Tracks.Where(t => t.Status == TrackStatus.Unknown)) {
-            await SynchronizeTrack(args.SavePath, item);
+            await SynchronizeTrack(savePath, item);
             report.NewTracks.Add(item);
         }
 
         Console.WriteLine($"Found {report.NewTracks.Count} new tracks.\n");
         info.Serialize(args.InfoFilePath);
-        report.Save(args.SavePath);
+        report.Save(savePath);
         report.Print(args.Silent);
+    }
+
+    private static string GetAndSetSavePath(PathArgument args) {
+        if (args.SavePath is null) {
+            args.SavePath = PropertiesStorage.Instance.SavePath ?? throw new Exception("Save path must be specified at least once");
+        } else {
+            PropertiesStorage.Instance.SavePath = args.SavePath;
+            PropertiesStorage.Instance.Save();
+        }
+        return args.SavePath;
+    }
+
+    private static string GetAndSetAccessToken(PathArgument args) {
+        if (args.AccessToken is null) {
+            return PropertiesStorage.Instance.ApiToken ?? throw new Exception("Access token must be specified at least once");
+        } else {
+            PropertiesStorage.Instance.ApiToken = args.AccessToken;
+            PropertiesStorage.Instance.Save();
+            return args.AccessToken;
+        }
     }
 
     private async Task RetryAsync(Func<Task> action) {

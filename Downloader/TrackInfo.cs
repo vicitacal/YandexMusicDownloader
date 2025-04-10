@@ -38,7 +38,7 @@ internal class TrackInfo {
         }
     }
 
-    public override string ToString() => $"[{Id}] {(string.IsNullOrEmpty(ArtistTitle) ? "*Unknown artist*" : ArtistTitle)} - {Title}";
+    public override string ToString() => $"{$"[{Id}]", -11} {(string.IsNullOrEmpty(ArtistTitle) ? "*Unknown artist*" : ArtistTitle)} - {Title}";
 
     private const string _musicExtension = ".mp3";
 
