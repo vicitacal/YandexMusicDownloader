@@ -9,6 +9,7 @@
 		<LangVersion>12</LangVersion>
 		<RootNamespace>MusicApiDownloader</RootNamespace>
 		<NoWarn>1701;1702;NETSDK1138</NoWarn>
+		<ApplicationIcon>Media/Icon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
