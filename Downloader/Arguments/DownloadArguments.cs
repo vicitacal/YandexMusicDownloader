@@ -6,8 +6,8 @@ namespace MusicApiDownloader.Arguments;
 [Verb("download", HelpText = "Downloads whole playlist")]
 internal class DownloadArguments : PathArgument {
 
-    [Option('l', "list", Required = true, HelpText = "Id of the play list to download. You can find it by going to the desired playlist in the browser in the old website design. In the link, the last digit will be the playlist id.")]
-    public int PlayListId { get; set; } = -1;
+    [Option('l', "list", Required = true, HelpText = "Id or Uid of the play list to download. You can find it by going to the desired playlist in the browser in the old website design. In the link, the last digit will be the playlist id.")]
+    public string PlayListId { get; set; } = string.Empty;
 
     [Option('p', "path", HelpText = "Path to the folder to save. Last choose will save and use for later runs. Default is desktop.")]
     public override string? SavePath { get; set; }

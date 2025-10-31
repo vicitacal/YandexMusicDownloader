@@ -28,8 +28,13 @@ internal class MusicDownloader {
     public async Task Download(DownloadArguments args) {
         await AuthorizeAsync(GetAndSetAccessToken(args));
         args.UserName ??= _client.Account.Login;
-        _targetPlaylist = await _client.GetPlaylist(args.UserName, args.PlayListId.ToString())
-            ?? throw new Exception($"Cannot find playlist {args.UserName}:{args.PlayListId}");
+        YPlaylist? playlist = null;
+        if (int.TryParse(args.PlayListId, out var playListId)) {
+            playlist = await _client.GetPlaylist(args.UserName, args.PlayListId);
+        } else {
+            playlist = await _client.GetPlaylist(args.PlayListId);
+        }
+        _targetPlaylist = playlist ?? throw new Exception($"Cannot find playlist {args.UserName}:{args.PlayListId}");
         args.ValidateSavePath(_targetPlaylist.Title);
 
         var playlistInfo = await GetPlaylistInfoAsync(args);
