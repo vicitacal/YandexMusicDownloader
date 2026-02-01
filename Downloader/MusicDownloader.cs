@@ -1,12 +1,15 @@
-﻿using System.Diagnostics;
-using Yandex.Music.Api.Extensions.API;
-using MusicApiDownloader.Arguments;
-using Yandex.Music.Client;
-using Newtonsoft.Json;
-using Yandex.Music.Api.Models.Playlist;
-using Yandex.Music.Downloader;
+﻿using MusicApiDownloader.Arguments;
 using MusicApiDownloader.Properties;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using Microsoft.Win32.TaskScheduler;
+using System.Reflection;
 using System.Text;
+using Yandex.Music.Api.Extensions.API;
+using Yandex.Music.Api.Models.Playlist;
+using Yandex.Music.Client;
+using Yandex.Music.Downloader;
+using Task = System.Threading.Tasks.Task;
 
 namespace MusicApiDownloader;
 
@@ -74,7 +77,7 @@ internal class MusicDownloader {
             playlistInfo = JsonConvert.DeserializeObject<PlaylistInfo>(File.ReadAllText(args.InfoFilePath));
         }
         if (playlistInfo == null) {
-            if (_targetPlaylist == null) { throw new Exception($"Cannot serialize playlist info at {args.InfoFilePath}"); }
+            if (_targetPlaylist == null) { throw new Exception($"Cannot find or deserialize playlist info at \"{args.InfoFilePath}\""); }
             playlistInfo = new PlaylistInfo(_targetPlaylist) { UserName = _targetPlaylist.Owner.Login, Id = _targetPlaylist.Kind };
         } else {
             _targetPlaylist = await _client.GetPlaylist(playlistInfo.UserName, playlistInfo.Id.ToString());
@@ -126,11 +129,12 @@ internal class MusicDownloader {
     }
 
     public async Task Verify(VerifyArguments args) {
+        if (args is ScheduleArguments) { return; }
         await AuthorizeAsync(GetAndSetAccessToken(args));
+        var savePath = GetAndSetSavePath(args);
         var info = await GetPlaylistInfoAsync(args);
         _targetPlaylist ??= await _client.GetPlaylist(info.UserName, info.Id.ToString());
         var report = new VerifyReport();
-        var savePath = GetAndSetSavePath(args);
 
         Console.WriteLine($"---Playlist \'{info.Title}\' is found.---\n\nChecking removed tracks");
         var removedTracks = info.Tracks.Where(t => !_targetPlaylist.Tracks.Any(p => p.Id == t.Id)).ToList();
@@ -172,6 +176,37 @@ internal class MusicDownloader {
         info.Serialize(args.InfoFilePath);
         report.Save(savePath);
         report.Print(args.Silent);
+    }
+
+    internal void Schedule(ScheduleArguments arguments) {
+        using TaskService taskService = new();
+        if (arguments.RemoveSchedule) {
+            taskService.RootFolder.DeleteTask(_scheduleTaskName, false);
+            Console.WriteLine("The task is successfully removed.");
+            return;
+        }
+        var savePath = Path.GetFullPath(GetAndSetSavePath(arguments));
+        if (!File.Exists(arguments.InfoFilePath)) {
+            throw new Exception($"Cannot find playlist info file at \"{arguments.InfoFilePath}\". Please run download or verify to specified folder first.");
+        }
+        Console.WriteLine("Please make sure that this program path will not change. Otherwise scheduled task will not work.");
+        if (taskService.RootFolder.Tasks.Any(t => t.Name == _scheduleTaskName)) {
+            taskService.RootFolder.DeleteTask(_scheduleTaskName, false);
+            Console.WriteLine("The existing task is successfully removed.");
+        }
+        GetAndSetAccessToken(arguments);
+        var exePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+        var newTask = taskService.NewTask();
+        newTask.RegistrationInfo.Description = "Launching playlist verification and downloads";
+        var trigger = new DailyTrigger {
+            StartBoundary = DateTime.Today.Add(arguments.CheckTimeParsed.ToTimeSpan()),
+            DaysInterval = (short)arguments.IntervalDays
+        };
+        newTask.Triggers.Add(trigger);
+        newTask.Actions.Add(new ExecAction(exePath, $"verify -p \"{savePath}\" -s"));
+        newTask.Settings.StartWhenAvailable = true;
+        taskService.RootFolder.RegisterTaskDefinition(_scheduleTaskName, newTask);
+        Console.WriteLine($"The task '{_scheduleTaskName}' was successfully scheduled on {arguments.CheckTime} every {arguments.IntervalDays} day.");
     }
 
     private static string GetAndSetSavePath(PathArgument args) {
@@ -219,5 +254,6 @@ internal class MusicDownloader {
 
     private YPlaylist? _targetPlaylist;
     private YandexMusicClientAsync _client = null!;
+    private const string _scheduleTaskName = "Yandex music playlist check";
 
 }

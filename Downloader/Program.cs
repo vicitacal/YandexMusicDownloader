@@ -14,8 +14,9 @@ public partial class Program {
             ShowConsole();
         }
         var downloader = new MusicDownloader();
-        var result = Parser.Default.ParseArguments<DownloadArguments, VerifyArguments, StatusArguments>(args);
+        var result = Parser.Default.ParseArguments<DownloadArguments, VerifyArguments, StatusArguments, ScheduleArguments>(args);
         try {
+            result.WithParsed<ScheduleArguments>(downloader.Schedule);
             await result.WithParsedAsync<DownloadArguments>(downloader.Download);
             await result.WithParsedAsync<VerifyArguments>(downloader.Verify);
             result.WithParsed<StatusArguments>(downloader.ShowStatus);

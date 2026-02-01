@@ -12,7 +12,7 @@ internal class DownloadArguments : PathArgument {
     [Option('p', "path", HelpText = "Path to the folder to save. Last choose will save and use for later runs. Default is desktop.")]
     public override string? SavePath { get; set; }
 
-    [Option('u', "user", HelpText = "User name who playlist will download. (default is access token username)")]
+    [Option('u', "user", HelpText = "User name who playlist will download. Used only in old format with id of the playlist instead of Uid. (default is access token username)")]
     public string? UserName { get; set; }
 
     public void ValidateSavePath(string folderName) {
