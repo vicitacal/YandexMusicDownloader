@@ -14,57 +14,7 @@ A small command-line utility to download and keep Yandex.Music playlists locally
 
 ---
 
-## Files produced / used
-
-- PlaylistInfo.json — stored inside the playlist folder (SavePath). Contains playlist metadata and per-track status.
-- UserData.json — stored in %AppData%\<application-folder> and used to persist last token and save path.
-- Downloaded tracks — saved to the specified folder; existing files are skipped.
-
----
-
-## Commands & options
-
-All commands accept common options described below.
-
-Common options (ArgumentsBase)
-- -t, --token <token>  
-  Access token. If provided, it will be saved for future runs (unless using incognito). See token docs above.
-
-- -s, --silent  
-  Hide console output. Final summary and change notifications are shown as a message box (if any track changed).
-
-- -i, --incog  
-  Do not save the provided access token to persistent storage (UserData.json).
-
-Path-related option (PathArgument)
-- -p, --path <path>  
-  Path to the folder where playlist is (for verify/status) or where tracks will be saved (for download). The last used path is stored and reused on subsequent runs (unless omitted).
-
-Download (DownloadArguments)
-- download (verb) — Downloads the whole playlist.
-- -l, --list <id|uuid> (required)  
-  Playlist identifier: either numeric id or uuid (uid). When the old format with numeric id is used, you can specify -u to indicate the user owner.
-- -u, --user <username>  
-  (Optional) Playlist owner username — used when passing a numeric playlist id instead of uuid.
-
-Verify (VerifyArguments)
-- verify (verb) — Compare the current online playlist with the saved PlaylistInfo.json. Detects removed, lost, recovered and new tracks; attempts to re-download missing tracks.
-
-Status (StatusArguments)
-- status (verb) — Print the full saved state of the playlist (grouped by track status).
-
-Schedule (ScheduleArguments)
-- schedule (verb) — Create / remove a Windows scheduled task that runs `verify` daily.
-- -m, --time <HH:mm> (default: "12:00")  
-  Time of day to perform checks.
-- -d, --interval <days> (default: 1)  
-  Days interval between checks.
-- -r, --remove  
-  Remove the scheduled task (ignores other schedule options).
-
----
-
-## How it works (behavior details)
+## How to use
 
 1. Authorization
    - The app uses the provided access token to authorize the Yandex.Music client.
@@ -91,7 +41,7 @@ Schedule (ScheduleArguments)
 
 5. Scheduling
    - On Windows the `schedule` command registers a daily Task Scheduler job that runs the app with `verify -p "<savePath>" -s`.
-   - The app will warn you if the executable path changes — scheduled tasks reference the absolute executable path.
+   - The app will warn you if the executable path changes ï¿½ scheduled tasks reference the absolute executable path.
    - `schedule -r` removes the task.
 
 6. Retry policy
@@ -127,9 +77,17 @@ Notes:
 
 ## Troubleshooting
 
-- "Access token must be specified at least once" — pass -t <token> or ensure token is saved in AppData from a previous run.
-- "Cannot find playlist info file" — run `download` at least once for that folder, or point verify/status to the correct folder with -p.
-- Scheduling fails or task does not run — ensure the path to the executable will remain unchanged and that you have sufficient privileges to register scheduled tasks.
+- "Access token must be specified at least once" ï¿½ pass -t <token> or ensure token is saved in AppData from a previous run.
+- "Cannot find playlist info file" ï¿½ run `download` at least once for that folder, or point verify/status to the correct folder with -p.
+- Scheduling fails or task does not run ï¿½ ensure the path to the executable will remain unchanged and that you have sufficient privileges to register scheduled tasks.
+
+---
+
+## Files produced / used
+
+- PlaylistInfo.json ï¿½ stored inside the playlist folder (SavePath). Contains playlist metadata and per-track status.
+- UserData.json ï¿½ stored in %AppData%\<application-folder> and used to persist last token and save path.
+- Downloaded tracks ï¿½ saved to the specified folder; existing files are skipped.
 
 ---
 
@@ -146,8 +104,3 @@ Notes:
 This project is licensed under the GNU Affero General Public License v3. See LICENSE.txt for details.
 
 ---
-
-If you want, I can:
-- Add translated (Russian) README,
-- Add a short usage banner printed by the app,
-- Or generate a small example PowerShell script to create scheduled tasks manually.
