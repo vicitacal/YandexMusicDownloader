@@ -23,7 +23,7 @@ internal class MusicDownloader {
         var client = new YandexMusicClientAsync();
         var authSuccess = await RetryAsync(() => client.Authorize(accessToken));
         if (!authSuccess) {
-            throw new Exception("Cannot authorize");
+            throw new UserErrorException("Cannot authorize");
         }
         _client = client;
     }
@@ -37,8 +37,8 @@ internal class MusicDownloader {
         } else {
             playlist = await _client.GetPlaylist(args.PlayListId);
         }
-        _targetPlaylist = playlist ?? throw new Exception($"Cannot find playlist {args.UserName}:{args.PlayListId}");
-        args.ValidateSavePath(_targetPlaylist.Title);
+        _targetPlaylist = playlist ?? throw new UserErrorException($"Cannot find playlist {args.UserName}:{args.PlayListId}");
+        GetAndSetSavePath(args, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), _targetPlaylist.Title));
 
         var playlistInfo = await GetPlaylistInfoAsync(args);
 
@@ -77,7 +77,7 @@ internal class MusicDownloader {
             playlistInfo = JsonConvert.DeserializeObject<PlaylistInfo>(File.ReadAllText(args.InfoFilePath));
         }
         if (playlistInfo == null) {
-            if (_targetPlaylist == null) { throw new Exception($"Cannot find or deserialize playlist info at \"{args.InfoFilePath}\""); }
+            if (_targetPlaylist == null) { throw new UserErrorException($"Cannot find or deserialize playlist info at \"{args.InfoFilePath}\""); }
             playlistInfo = new PlaylistInfo(_targetPlaylist) { UserName = _targetPlaylist.Owner.Login, Id = _targetPlaylist.Kind };
         } else {
             _targetPlaylist = await _client.GetPlaylist(playlistInfo.UserName, playlistInfo.Id.ToString());
@@ -178,50 +178,53 @@ internal class MusicDownloader {
         report.Print(args.Silent);
     }
 
-    internal void Schedule(ScheduleArguments arguments) {
+    internal void Schedule(ScheduleArguments args) {
         using TaskService taskService = new();
-        if (arguments.RemoveSchedule) {
+        if (args.RemoveSchedule) {
             taskService.RootFolder.DeleteTask(_scheduleTaskName, false);
             Console.WriteLine("The task is successfully removed.");
             return;
         }
-        var savePath = Path.GetFullPath(GetAndSetSavePath(arguments));
-        if (!File.Exists(arguments.InfoFilePath)) {
-            throw new Exception($"Cannot find playlist info file at \"{arguments.InfoFilePath}\". Please run download or verify to specified folder first.");
+        var savePath = Path.GetFullPath(GetAndSetSavePath(args));
+        if (!File.Exists(args.InfoFilePath)) {
+            throw new UserErrorException($"Cannot find playlist info file at \"{args.InfoFilePath}\". Please run download or verify to specified folder first.");
         }
         Console.WriteLine("Please make sure that this program path will not change. Otherwise scheduled task will not work.");
         if (taskService.RootFolder.Tasks.Any(t => t.Name == _scheduleTaskName)) {
             taskService.RootFolder.DeleteTask(_scheduleTaskName, false);
             Console.WriteLine("The existing task is successfully removed.");
         }
-        GetAndSetAccessToken(arguments);
+        GetAndSetAccessToken(args);
         var exePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
         var newTask = taskService.NewTask();
         newTask.RegistrationInfo.Description = "Launching playlist verification and downloads";
         var trigger = new DailyTrigger {
-            StartBoundary = DateTime.Today.Add(arguments.CheckTimeParsed.ToTimeSpan()),
-            DaysInterval = (short)arguments.IntervalDays
+            StartBoundary = DateTime.Today.Add(args.CheckTimeParsed.ToTimeSpan()),
+            DaysInterval = (short)args.IntervalDays
         };
         newTask.Triggers.Add(trigger);
         newTask.Actions.Add(new ExecAction(exePath, $"verify -p \"{savePath}\" -s"));
         newTask.Settings.StartWhenAvailable = true;
         taskService.RootFolder.RegisterTaskDefinition(_scheduleTaskName, newTask);
-        Console.WriteLine($"The task '{_scheduleTaskName}' was successfully scheduled on {arguments.CheckTime} every {arguments.IntervalDays} day.");
+        Console.WriteLine($"The task '{_scheduleTaskName}' was successfully scheduled on {args.CheckTime} every {args.IntervalDays} day.");
     }
 
-    private static string GetAndSetSavePath(PathArgument args) {
+    private static string GetAndSetSavePath(PathArgument args, string? defaultPath = null) {
         if (args.SavePath is null) {
-            args.SavePath = PropertiesStorage.Instance.SavePath ?? throw new Exception("Save path must be specified at least once");
+            args.SavePath = PropertiesStorage.Instance.SavePath ?? defaultPath ?? throw new UserErrorException("Save path must be specified in any action at least once");
         } else {
             PropertiesStorage.Instance.SavePath = args.SavePath;
             PropertiesStorage.Instance.Save();
+        }
+        if (!Directory.Exists(args.SavePath)) {
+            Directory.CreateDirectory(args.SavePath);
         }
         return args.SavePath;
     }
 
     private static string GetAndSetAccessToken(PathArgument args) {
         if (args.AccessToken is null) {
-            return PropertiesStorage.Instance.ApiToken ?? throw new Exception("Access token must be specified at least once");
+            return PropertiesStorage.Instance.ApiToken ?? throw new UserErrorException("Access token must be specified in any action at least once");
         } else {
             PropertiesStorage.Instance.ApiToken = args.AccessToken;
             PropertiesStorage.Instance.Save();

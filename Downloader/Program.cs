@@ -21,10 +21,11 @@ public partial class Program {
             await result.WithParsedAsync<VerifyArguments>(downloader.Verify);
             result.WithParsed<StatusArguments>(downloader.ShowStatus);
         } catch (Exception ex) {
+            var message = ex is UserErrorException ? ex.Message : $"Action ends with unknown exception {ex}";
             if (silent) {
-                ShowMessage($"Action ends with exception {ex}");
+                ShowMessage(message);
             } else {
-                Console.WriteLine($"Action ends with exception {ex}");
+                Console.WriteLine(message);
             }
         }
         if (!silent) {

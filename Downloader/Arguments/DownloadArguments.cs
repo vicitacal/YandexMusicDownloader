@@ -15,11 +15,4 @@ internal class DownloadArguments : PathArgument {
     [Option('u', "user", HelpText = "User name who playlist will download. Used only in old format with id of the playlist instead of Uid. (default is access token username)")]
     public string? UserName { get; set; }
 
-    public void ValidateSavePath(string folderName) {
-        SavePath ??= PropertiesStorage.Instance.SavePath ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), folderName);
-        if (!Directory.Exists(SavePath)) {
-            Directory.CreateDirectory(SavePath);
-        }
-    }
-
 }
